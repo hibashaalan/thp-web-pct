@@ -24,9 +24,3 @@ export async function createClient() {
     }
   )
 }
-
-export async function getAccessToken(): Promise<string | undefined> {
-  const supabase = await createClient()
-  const { data: { session } } = await supabase.auth.getSession()
-  return session?.access_token ?? undefined
-}

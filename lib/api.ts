@@ -1,27 +1,15 @@
-import { getAccessToken } from "@/lib/supabase/server"
-import type { Flavor, Step, User, Caption } from "@/types"
+import type { Flavor, Step, Caption } from "@/types"
 
 const BASE_URL = "https://api.almostcrackd.ai"
 
-async function request<T>(
-  path: string,
-  init?: RequestInit,
-  skipAuth = false
-): Promise<T> {
-  const headers: Record<string, string> = {
-    "Content-Type": "application/json",
-    ...(init?.headers as Record<string, string>),
-  }
-
-  if (!skipAuth) {
-    const token = await getAccessToken()
-    if (token) headers["Authorization"] = `Bearer ${token}`
-  }
-
+async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${BASE_URL}${path}`, {
     cache: "no-store",
     ...init,
-    headers,
+    headers: {
+      "Content-Type": "application/json",
+      ...(init?.headers as Record<string, string>),
+    },
   })
 
   if (!res.ok) {
@@ -32,10 +20,6 @@ async function request<T>(
   if (res.status === 204) return undefined as T
   return res.json()
 }
-
-// Auth
-export const getMe = (): Promise<User> =>
-  request("/me")
 
 // Flavors
 export const getFlavors = (): Promise<Flavor[]> =>

@@ -1,4 +1,3 @@
-import { getAccessToken } from "@/lib/supabase/server"
 import { getSteps } from "./api"
 
 export type StepResult = {
@@ -11,10 +10,7 @@ export async function runChain(
   flavorId: string,
   imageUrl: string
 ): Promise<StepResult[]> {
-  const [steps, token] = await Promise.all([
-    getSteps(flavorId),
-    getAccessToken(),
-  ])
+  const steps = await getSteps(flavorId)
   const sorted = steps.sort((a, b) => a.step_number - b.step_number)
 
   let input = imageUrl
@@ -23,10 +19,7 @@ export async function runChain(
   for (const step of sorted) {
     const res = await fetch("https://api.almostcrackd.ai/generate", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ prompt: step.prompt, input }),
     })
 
