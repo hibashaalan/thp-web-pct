@@ -1,22 +1,21 @@
-"use client"
-
-import { useEffect, useState } from "react"
 import { getFlavors } from "@/lib/api"
-import Link from "next/link"
+import FlavorItem from "./FlavorItem"
 
-export default function FlavorList() {
-  const [flavors, setFlavors] = useState([])
+export default async function FlavorList() {
+  const flavors = await getFlavors()
 
-  useEffect(() => {
-    getFlavors().then(setFlavors)
-  }, [])
+  if (flavors.length === 0) {
+    return (
+      <p className="text-gray-500 dark:text-gray-400 text-sm">
+        No flavors yet. Create one above.
+      </p>
+    )
+  }
 
   return (
-    <ul>
+    <ul className="space-y-2">
       {flavors.map((f) => (
-        <li key={f.id}>
-          <Link href={`/flavors/${f.id}`}>{f.name}</Link>
-        </li>
+        <FlavorItem key={f.id} flavor={f} />
       ))}
     </ul>
   )
