@@ -1,73 +1,184 @@
+import { createClient } from "@/lib/supabase/server"
 import type { Flavor, Step, Caption } from "@/types"
 
-const BASE_URL = "https://api.almostcrackd.ai"
+// ── Flavors ──────────────────────────────────────────────────────────────────
 
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(`${BASE_URL}${path}`, {
-    cache: "no-store",
-    ...init,
-    headers: {
-      "Content-Type": "application/json",
-      ...(init?.headers as Record<string, string>),
-    },
-  })
-
-  if (!res.ok) {
-    const body = await res.text()
-    throw new Error(`API ${res.status} on ${path}: ${body}`)
-  }
-
-  if (res.status === 204) return undefined as T
-  return res.json()
+export async function getFlavors(): Promise<Flavor[]> {
+  const supabase = await createClient()
+  const { data, error } = await supabase
+    .from("flavors")
+    .select("*")
+    .order("name")
+  if (error) throw new Error(error.message)
+  return data
 }
 
-// Flavors
-export const getFlavors = (): Promise<Flavor[]> =>
-  request("/flavors")
+export async function getFlavor(id: string): Promise<Flavor> {
+  const supabase = await createClient()
+  const { data, error } = await supabase
+    .from("flavors")
+    .select("*")
+    .eq("id", id)
+    .single()
+  if (error) throw new Error(error.message)
+  return data
+}
 
-export const getFlavor = (id: string): Promise<Flavor> =>
-  request(`/flavors/${encodeURIComponent(id)}`)
+export async function createFlavor(name: string): Promise<Flavor> {
+  const supabase = await createClient()
+  const { data, error } = await supabase
+    .from("flavors")
+    .insert({ name })
+    .select()
+    .single()
+  if (error) throw new Error(error.message)
+  return data
+}
 
-export const createFlavor = (name: string): Promise<Flavor> =>
-  request("/flavors", {
-    method: "POST",
-    body: JSON.stringify({ name }),
-  })
+export async function updateFlavor(id: string, name: string): Promise<Flavor> {
+  const supabase = await createClient()
+  const { data, error } = await supabase
+    .from("flavors")
+    .update({ name })
+    .eq("id", id)
+    .select()
+    .single()
+  if (error) throw new Error(error.message)
+  return data
+}
 
-export const updateFlavor = (id: string, name: string): Promise<Flavor> =>
-  request(`/flavors/${encodeURIComponent(id)}`, {
-    method: "PATCH",
-    body: JSON.stringify({ name }),
-  })
+export async function deleteFlavor(id: string): Promise<void> {
+  const supabase = await createClient()
+  const { error } = await supabase.from("flavors").delete().eq("id", id)
+  if (error) throw new Error(error.message)
+}
 
-export const deleteFlavor = (id: string): Promise<void> =>
-  request(`/flavors/${encodeURIComponent(id)}`, { method: "DELETE" })
+// ── Steps ─────────────────────────────────────────────────────────────────────
 
-// Steps
-export const getSteps = (flavorId: string): Promise<Step[]> =>
-  request(`/steps?flavor_id=${encodeURIComponent(flavorId)}`)
+export async function getSteps(flavorId: string): Promise<Step[]> {
+  const supabase = await createClient()
+  const { data, error } = await supabase
+    .from("steps")
+    .select("*")
+    .eq("flavor_id", flavorId)
+    .order("step_number")
+  if (error) throw new Error(error.message)
+  return data
+}
 
-export const createStep = (flavorId: string, prompt: string): Promise<Step> =>
-  request("/steps", {
-    method: "POST",
-    body: JSON.stringify({ flavor_id: flavorId, prompt }),
-  })
+export async function createStep(
+  flavorId: string,
+  prompt: string
+): Promise<Step> {
+  const supabase = await createClient()
+  const { data: existing } = await supabase
+    .from("steps")
+    .select("step_number")
+    .eq("flavor_id", flavorId)
+    .order("step_number", { ascending: false })
+    .limit(1)
 
-export const updateStep = (id: string, prompt: string): Promise<Step> =>
-  request(`/steps/${encodeURIComponent(id)}`, {
-    method: "PATCH",
-    body: JSON.stringify({ prompt }),
-  })
+  const nextNum = (existing?.[0]?.step_number ?? 0) + 1
 
-export const deleteStep = (id: string): Promise<void> =>
-  request(`/steps/${encodeURIComponent(id)}`, { method: "DELETE" })
+  const { data, error } = await supabase
+    .from("steps")
+    .insert({ flavor_id: flavorId, prompt, step_number: nextNum })
+    .select()
+    .single()
+  if (error) throw new Error(error.message)
+  return data
+}
 
-export const moveStepUp = (stepId: string): Promise<Step> =>
-  request(`/steps/${encodeURIComponent(stepId)}/move-up`, { method: "POST" })
+export async function updateStep(id: string, prompt: string): Promise<Step> {
+  const supabase = await createClient()
+  const { data, error } = await supabase
+    .from("steps")
+    .update({ prompt })
+    .eq("id", id)
+    .select()
+    .single()
+  if (error) throw new Error(error.message)
+  return data
+}
 
-export const moveStepDown = (stepId: string): Promise<Step> =>
-  request(`/steps/${encodeURIComponent(stepId)}/move-down`, { method: "POST" })
+export async function deleteStep(id: string): Promise<void> {
+  const supabase = await createClient()
+  const { error } = await supabase.from("steps").delete().eq("id", id)
+  if (error) throw new Error(error.message)
+}
 
-// Captions
-export const getCaptions = (flavorId: string): Promise<Caption[]> =>
-  request(`/captions?flavor_id=${encodeURIComponent(flavorId)}`)
+export async function moveStepUp(stepId: string): Promise<Step> {
+  const supabase = await createClient()
+  const { data: step } = await supabase
+    .from("steps")
+    .select("*")
+    .eq("id", stepId)
+    .single()
+  if (!step) throw new Error("Step not found")
+
+  const { data: above } = await supabase
+    .from("steps")
+    .select("*")
+    .eq("flavor_id", step.flavor_id)
+    .eq("step_number", step.step_number - 1)
+    .single()
+  if (!above) return step
+
+  // Swap using a temporary value to avoid unique constraint conflicts
+  await supabase.from("steps").update({ step_number: -1 }).eq("id", step.id)
+  await supabase
+    .from("steps")
+    .update({ step_number: step.step_number })
+    .eq("id", above.id)
+  const { data: updated } = await supabase
+    .from("steps")
+    .update({ step_number: above.step_number })
+    .eq("id", step.id)
+    .select()
+    .single()
+  return updated ?? step
+}
+
+export async function moveStepDown(stepId: string): Promise<Step> {
+  const supabase = await createClient()
+  const { data: step } = await supabase
+    .from("steps")
+    .select("*")
+    .eq("id", stepId)
+    .single()
+  if (!step) throw new Error("Step not found")
+
+  const { data: below } = await supabase
+    .from("steps")
+    .select("*")
+    .eq("flavor_id", step.flavor_id)
+    .eq("step_number", step.step_number + 1)
+    .single()
+  if (!below) return step
+
+  await supabase.from("steps").update({ step_number: -1 }).eq("id", step.id)
+  await supabase
+    .from("steps")
+    .update({ step_number: step.step_number })
+    .eq("id", below.id)
+  const { data: updated } = await supabase
+    .from("steps")
+    .update({ step_number: below.step_number })
+    .eq("id", step.id)
+    .select()
+    .single()
+  return updated ?? step
+}
+
+// ── Captions ──────────────────────────────────────────────────────────────────
+
+export async function getCaptions(flavorId: string): Promise<Caption[]> {
+  const supabase = await createClient()
+  const { data, error } = await supabase
+    .from("captions")
+    .select("*")
+    .eq("flavor_id", flavorId)
+    .order("created_at", { ascending: false })
+  if (error) throw new Error(error.message)
+  return data
+}
