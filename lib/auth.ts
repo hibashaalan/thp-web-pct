@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation"
-import { cookies } from "next/headers"
+import { createClient } from "@/lib/supabase/server"
 import { getMe } from "./api"
 import type { User } from "@/types"
 
@@ -8,10 +8,16 @@ export type { User }
 export const isAdmin = (user: User | null | undefined): boolean =>
   !!(user?.is_superadmin || user?.is_matrix_admin)
 
+export async function isLoggedIn(): Promise<boolean> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  return !!user
+}
+
 export async function getSession(): Promise<User | null> {
-  const store = await cookies()
-  const token = store.get("token")?.value
-  if (!token) return null
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return null
   try {
     return await getMe()
   } catch {

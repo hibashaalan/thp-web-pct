@@ -1,8 +1,8 @@
 import Link from "next/link"
-import { getSession } from "@/lib/auth"
+import { isLoggedIn } from "@/lib/auth"
 
 export default async function Home() {
-  const user = await getSession()
+  const loggedIn = await isLoggedIn()
 
   return (
     <div className="space-y-4">
@@ -10,7 +10,7 @@ export default async function Home() {
       <p className="text-gray-600 dark:text-gray-400">
         Manage and test AI-powered humor pipelines.
       </p>
-      {user ? (
+      {loggedIn ? (
         <Link
           href="/flavors"
           className="inline-block bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded"

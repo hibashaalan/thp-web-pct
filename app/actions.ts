@@ -3,8 +3,8 @@
 import { revalidatePath } from "next/cache"
 import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
+import { createClient } from "@/lib/supabase/server"
 import {
-  login,
   createFlavor,
   updateFlavor,
   deleteFlavor,
@@ -17,29 +17,9 @@ import {
 import { runChain } from "@/lib/chain"
 import type { StepResult } from "@/lib/chain"
 
-export async function loginAction(
-  email: string,
-  password: string
-): Promise<{ error?: string }> {
-  try {
-    const { token } = await login(email, password)
-    const store = await cookies()
-    store.set("token", token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: 60 * 60 * 24 * 7,
-      path: "/",
-    })
-  } catch (e) {
-    return { error: e instanceof Error ? e.message : "Login failed" }
-  }
-  redirect("/flavors")
-}
-
 export async function logoutAction(): Promise<void> {
-  const store = await cookies()
-  store.delete("token")
+  const supabase = await createClient()
+  await supabase.auth.signOut()
   redirect("/login")
 }
 
@@ -156,4 +136,11 @@ export async function runChainAction(
   } catch (e) {
     return { error: e instanceof Error ? e.message : "Failed to run chain" }
   }
+}
+
+export async function setThemeAction(
+  theme: "light" | "dark" | "system"
+): Promise<void> {
+  const store = await cookies()
+  store.set("theme", theme, { path: "/", maxAge: 60 * 60 * 24 * 365 })
 }

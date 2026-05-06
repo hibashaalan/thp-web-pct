@@ -1,11 +1,11 @@
 import Link from "next/link"
 import { cookies } from "next/headers"
-import { getSession } from "@/lib/auth"
+import { isLoggedIn } from "@/lib/auth"
 import ThemeToggle from "./ThemeToggle"
 import LogoutButton from "./LogoutButton"
 
 export default async function Navbar() {
-  const [user, store] = await Promise.all([getSession(), cookies()])
+  const [loggedIn, store] = await Promise.all([isLoggedIn(), cookies()])
   const theme = (store.get("theme")?.value ?? "system") as
     | "light"
     | "system"
@@ -18,7 +18,7 @@ export default async function Navbar() {
           <Link href="/" className="font-semibold text-lg">
             Flavor Tool
           </Link>
-          {user && (
+          {loggedIn && (
             <Link
               href="/flavors"
               className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
@@ -29,7 +29,7 @@ export default async function Navbar() {
         </div>
         <div className="flex items-center gap-3">
           <ThemeToggle initialTheme={theme} />
-          {user ? (
+          {loggedIn ? (
             <LogoutButton />
           ) : (
             <Link

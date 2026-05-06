@@ -1,4 +1,4 @@
-import { cookies } from "next/headers"
+import { getAccessToken } from "@/lib/supabase/server"
 import { getSteps } from "./api"
 
 export type StepResult = {
@@ -11,11 +11,11 @@ export async function runChain(
   flavorId: string,
   imageUrl: string
 ): Promise<StepResult[]> {
-  const steps = await getSteps(flavorId)
+  const [steps, token] = await Promise.all([
+    getSteps(flavorId),
+    getAccessToken(),
+  ])
   const sorted = steps.sort((a, b) => a.step_number - b.step_number)
-
-  const store = await cookies()
-  const token = store.get("token")?.value
 
   let input = imageUrl
   const results: StepResult[] = []

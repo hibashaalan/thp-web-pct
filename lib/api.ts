@@ -1,12 +1,7 @@
-import { cookies } from "next/headers"
+import { getAccessToken } from "@/lib/supabase/server"
 import type { Flavor, Step, User, Caption } from "@/types"
 
 const BASE_URL = "https://api.almostcrackd.ai"
-
-async function getToken(): Promise<string | undefined> {
-  const store = await cookies()
-  return store.get("token")?.value
-}
 
 async function request<T>(
   path: string,
@@ -19,7 +14,7 @@ async function request<T>(
   }
 
   if (!skipAuth) {
-    const token = await getToken()
+    const token = await getAccessToken()
     if (token) headers["Authorization"] = `Bearer ${token}`
   }
 
@@ -39,12 +34,6 @@ async function request<T>(
 }
 
 // Auth
-export const login = (email: string, password: string): Promise<{ token: string }> =>
-  request("/auth/login", {
-    method: "POST",
-    body: JSON.stringify({ email, password }),
-  }, true)
-
 export const getMe = (): Promise<User> =>
   request("/me")
 
