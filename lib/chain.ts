@@ -33,7 +33,8 @@ export async function runChain(
     })
 
     if (!res.ok) {
-      throw new Error(`Step ${step.step_number} failed: ${res.status}`)
+      const body = await res.text()
+      throw new Error(`Step ${step.step_number} failed: ${res.status} — ${body}`)
     }
 
     const data = await res.json()
