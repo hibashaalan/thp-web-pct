@@ -1,6 +1,28 @@
 import { createClient } from "@/lib/supabase/server"
 import type { Flavor, Step } from "@/types"
 
+const CRACKED_API = "https://api.almostcrackd.ai"
+
+async function getAuthHeaders(): Promise<Record<string, string>> {
+  const supabase = await createClient()
+  const { data: { session } } = await supabase.auth.getSession()
+  return {
+    "Content-Type": "application/json",
+    "apikey": process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    ...(session?.access_token ? { "Authorization": `Bearer ${session.access_token}` } : {}),
+  }
+}
+
+export async function getExternalFlavors(): Promise<Flavor[]> {
+  const headers = await getAuthHeaders()
+  const res = await fetch(`${CRACKED_API}/flavors`, { cache: "no-store", headers })
+  if (!res.ok) {
+    const body = await res.text()
+    throw new Error(`CrackedAPI ${res.status}: ${body}`)
+  }
+  return res.json()
+}
+
 // Flavors
 
 export async function getFlavors(): Promise<Flavor[]> {
