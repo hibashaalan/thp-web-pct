@@ -1,12 +1,14 @@
 import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
-import { getMe } from "./api"
-import type { User } from "@/types"
 
-export type { User }
+type Profile = {
+  id: string
+  is_superadmin: boolean
+  is_matrix_admin: boolean
+}
 
-export const isAdmin = (user: User | null | undefined): boolean =>
-  !!(user?.is_superadmin || user?.is_matrix_admin)
+export const isAdmin = (profile: Profile | null | undefined): boolean =>
+  !!(profile?.is_superadmin || profile?.is_matrix_admin)
 
 export async function isLoggedIn(): Promise<boolean> {
   const supabase = await createClient()
@@ -14,19 +16,22 @@ export async function isLoggedIn(): Promise<boolean> {
   return !!user
 }
 
-export async function getSession(): Promise<User | null> {
+export async function getSession(): Promise<Profile | null> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return null
-  try {
-    return await getMe()
-  } catch {
-    return null
-  }
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("id, is_superadmin, is_matrix_admin")
+    .eq("id", user.id)
+    .single()
+
+  return profile ?? null
 }
 
-export async function requireAdmin(): Promise<User> {
-  const user = await getSession()
-  if (!user || !isAdmin(user)) redirect("/login")
-  return user
+export async function requireAdmin(): Promise<Profile> {
+  const profile = await getSession()
+  if (!profile || !isAdmin(profile)) redirect("/login")
+  return profile
 }
