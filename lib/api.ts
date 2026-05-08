@@ -1,10 +1,10 @@
-import { createClient } from "@/lib/supabase/server"
+import { createAdminClient } from "@/lib/supabase/admin"
 import type { Flavor, Step } from "@/types"
 
 // Flavors
 
 export async function getFlavors(): Promise<Flavor[]> {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
   const { data, error } = await supabase
     .from("humor_flavors")
     .select("id, slug, description")
@@ -14,7 +14,7 @@ export async function getFlavors(): Promise<Flavor[]> {
 }
 
 export async function getFlavor(id: number): Promise<Flavor> {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
   const { data, error } = await supabase
     .from("humor_flavors")
     .select("id, slug, description")
@@ -25,7 +25,7 @@ export async function getFlavor(id: number): Promise<Flavor> {
 }
 
 export async function createFlavor(slug: string, description: string): Promise<Flavor> {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
   const { data, error } = await supabase
     .from("humor_flavors")
     .insert({ slug, description })
@@ -36,7 +36,7 @@ export async function createFlavor(slug: string, description: string): Promise<F
 }
 
 export async function updateFlavor(id: number, slug: string, description: string): Promise<Flavor> {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
   const { data, error } = await supabase
     .from("humor_flavors")
     .update({ slug, description })
@@ -48,7 +48,7 @@ export async function updateFlavor(id: number, slug: string, description: string
 }
 
 export async function deleteFlavor(id: number): Promise<void> {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
   const { error } = await supabase.from("humor_flavors").delete().eq("id", id)
   if (error) throw new Error(error.message)
 }
@@ -56,7 +56,7 @@ export async function deleteFlavor(id: number): Promise<void> {
 // Steps
 
 export async function getSteps(flavorId: string): Promise<Step[]> {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
   const { data, error } = await supabase
     .from("steps")
     .select("id, flavor_id, step_number, prompt")
@@ -67,7 +67,7 @@ export async function getSteps(flavorId: string): Promise<Step[]> {
 }
 
 export async function createStep(flavorId: string, prompt: string): Promise<Step> {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
   const { data: existing } = await supabase
     .from("steps")
     .select("step_number")
@@ -87,7 +87,7 @@ export async function createStep(flavorId: string, prompt: string): Promise<Step
 }
 
 export async function updateStep(id: string, prompt: string): Promise<Step> {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
   const { data, error } = await supabase
     .from("steps")
     .update({ prompt })
@@ -99,13 +99,13 @@ export async function updateStep(id: string, prompt: string): Promise<Step> {
 }
 
 export async function deleteStep(id: string): Promise<void> {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
   const { error } = await supabase.from("steps").delete().eq("id", id)
   if (error) throw new Error(error.message)
 }
 
 export async function moveStepUp(stepId: string): Promise<Step> {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
   const { data: step } = await supabase.from("steps").select("*").eq("id", stepId).single()
   if (!step) throw new Error("Step not found")
 
@@ -129,7 +129,7 @@ export async function moveStepUp(stepId: string): Promise<Step> {
 }
 
 export async function moveStepDown(stepId: string): Promise<Step> {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
   const { data: step } = await supabase.from("steps").select("*").eq("id", stepId).single()
   if (!step) throw new Error("Step not found")
 
