@@ -33,7 +33,13 @@ export async function getSession(): Promise<Profile | null> {
 }
 
 export async function requireAdmin(): Promise<Profile> {
-  const profile = await getSession()
+  let profile: Profile | null = null
+  try {
+    profile = await getSession()
+  } catch (e) {
+    console.error('[requireAdmin] getSession failed:', e)
+    throw e
+  }
   if (!profile || !isAdmin(profile)) redirect("/login")
   return profile
 }
