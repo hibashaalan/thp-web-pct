@@ -65,9 +65,9 @@ export default async function Home() {
                 <li key={f.id} className="flex items-center gap-3">
                   <Link
                     href={`/flavors/${f.id}`}
-                    className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
+                    className="text-sm font-mono text-blue-600 dark:text-blue-400 hover:underline"
                   >
-                    {f.name}
+                    {f.slug}
                   </Link>
                   <Link
                     href={`/flavors/${f.id}/test`}

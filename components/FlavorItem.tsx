@@ -7,19 +7,16 @@ import { updateFlavorAction, deleteFlavorAction } from "@/app/actions"
 
 export default function FlavorItem({ flavor }: { flavor: Flavor }) {
   const [editing, setEditing] = useState(false)
-  const [name, setName] = useState(flavor.name)
+  const [slug, setSlug] = useState(flavor.slug)
+  const [description, setDescription] = useState(flavor.description)
   const [error, setError] = useState("")
   const [pending, startTransition] = useTransition()
 
   const handleSave = () => {
-    if (!name.trim() || name.trim() === flavor.name) {
-      setEditing(false)
-      setName(flavor.name)
-      return
-    }
+    if (!slug.trim()) return
     setError("")
     startTransition(async () => {
-      const result = await updateFlavorAction(flavor.id, name.trim())
+      const result = await updateFlavorAction(flavor.id, slug.trim(), description.trim())
       if (result.error) {
         setError(result.error)
       } else {
@@ -29,7 +26,7 @@ export default function FlavorItem({ flavor }: { flavor: Flavor }) {
   }
 
   const handleDelete = () => {
-    if (!confirm(`Delete "${flavor.name}"? This cannot be undone.`)) return
+    if (!confirm(`Delete "${flavor.slug}"? This cannot be undone.`)) return
     startTransition(async () => {
       const result = await deleteFlavorAction(flavor.id)
       if (result.error) setError(result.error)
@@ -41,16 +38,16 @@ export default function FlavorItem({ flavor }: { flavor: Flavor }) {
       {editing ? (
         <>
           <input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") handleSave()
-              if (e.key === "Escape") {
-                setEditing(false)
-                setName(flavor.name)
-              }
-            }}
+            value={slug}
+            onChange={(e) => setSlug(e.target.value)}
+            placeholder="Slug"
             autoFocus
+            className="w-40 border border-gray-300 dark:border-gray-700 rounded px-2 py-1 text-sm bg-white dark:bg-gray-900"
+          />
+          <input
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="Description"
             className="flex-1 border border-gray-300 dark:border-gray-700 rounded px-2 py-1 text-sm bg-white dark:bg-gray-900"
           />
           <button
@@ -61,10 +58,7 @@ export default function FlavorItem({ flavor }: { flavor: Flavor }) {
             Save
           </button>
           <button
-            onClick={() => {
-              setEditing(false)
-              setName(flavor.name)
-            }}
+            onClick={() => { setEditing(false); setSlug(flavor.slug); setDescription(flavor.description) }}
             className="text-sm text-gray-500 hover:underline"
           >
             Cancel
@@ -74,10 +68,15 @@ export default function FlavorItem({ flavor }: { flavor: Flavor }) {
         <>
           <Link
             href={`/flavors/${flavor.id}`}
-            className="flex-1 font-medium hover:text-blue-600 dark:hover:text-blue-400 text-sm"
+            className="font-mono text-sm font-medium hover:text-blue-600 dark:hover:text-blue-400"
           >
-            {flavor.name}
+            {flavor.slug}
           </Link>
+          {flavor.description && (
+            <span className="flex-1 text-xs text-gray-500 dark:text-gray-400 truncate">
+              {flavor.description}
+            </span>
+          )}
           <Link
             href={`/flavors/${flavor.id}/test`}
             className="text-xs text-green-600 dark:text-green-400 hover:underline px-1"
@@ -88,7 +87,7 @@ export default function FlavorItem({ flavor }: { flavor: Flavor }) {
             onClick={() => setEditing(true)}
             className="text-xs text-blue-600 dark:text-blue-400 hover:underline px-1"
           >
-            Rename
+            Edit
           </button>
           <button
             onClick={handleDelete}

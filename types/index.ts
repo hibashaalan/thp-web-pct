@@ -1,6 +1,7 @@
 export type Flavor = {
-  id: string
-  name: string
+  id: number
+  slug: string
+  description: string
 }
 
 export type Step = {

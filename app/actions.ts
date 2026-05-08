@@ -22,10 +22,11 @@ export async function logoutAction(): Promise<void> {
 }
 
 export async function createFlavorAction(
-  name: string
+  slug: string,
+  description: string
 ): Promise<{ error?: string }> {
   try {
-    await createFlavor(name)
+    await createFlavor(slug, description)
     revalidatePath("/flavors")
     return {}
   } catch (e) {
@@ -34,11 +35,12 @@ export async function createFlavorAction(
 }
 
 export async function updateFlavorAction(
-  id: string,
-  name: string
+  id: number,
+  slug: string,
+  description: string
 ): Promise<{ error?: string }> {
   try {
-    await updateFlavor(id, name)
+    await updateFlavor(id, slug, description)
     revalidatePath("/flavors")
     return {}
   } catch (e) {
@@ -47,7 +49,7 @@ export async function updateFlavorAction(
 }
 
 export async function deleteFlavorAction(
-  id: string
+  id: number
 ): Promise<{ error?: string }> {
   try {
     await deleteFlavor(id)

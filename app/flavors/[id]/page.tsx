@@ -1,6 +1,6 @@
 import Link from "next/link"
 import { requireAdmin } from "@/lib/auth"
-import { getFlavors } from "@/lib/api"
+import { getFlavor } from "@/lib/api"
 import StepForm from "@/components/StepForm"
 import StepList from "@/components/StepList"
 
@@ -11,9 +11,7 @@ export default async function FlavorDetail({
 }) {
   await requireAdmin()
   const { id } = await params
-
-  const flavors = await getFlavors()
-  const flavor = flavors.find((f) => f.id === id)
+  const flavor = await getFlavor(Number(id)).catch(() => null)
 
   return (
     <div className="space-y-6">
@@ -25,7 +23,10 @@ export default async function FlavorDetail({
           >
             Back to Flavors
           </Link>
-          <h1 className="text-2xl font-bold mt-1">{flavor?.name ?? "Flavor"}</h1>
+          <h1 className="text-2xl font-bold mt-1 font-mono">{flavor?.slug ?? "Flavor"}</h1>
+          {flavor?.description && (
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{flavor.description}</p>
+          )}
         </div>
         <Link
           href={`/flavors/${id}/test`}
