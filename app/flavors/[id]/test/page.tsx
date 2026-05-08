@@ -1,79 +1,54 @@
-"use client"
+export const dynamic = 'force-dynamic'
 
-import { useState, useTransition, use } from "react"
-import Link from "next/link"
-import { runChainAction } from "@/app/actions"
-import type { CaptionResult } from "@/lib/chain"
+import { createAdminClient } from '@/lib/supabase/admin'
+import { notFound } from 'next/navigation'
+import Link from 'next/link'
+import TestCaptionGenerator from './_components/TestCaptionGenerator'
+import FlavorCaptions from './_components/FlavorCaptions'
 
-export default function TestPage({
-  params,
-}: {
-  params: Promise<{ id: string }>
-}) {
-  const { id } = use(params)
-  const [imageId, setImageId] = useState("")
-  const [result, setResult] = useState<CaptionResult | null>(null)
-  const [error, setError] = useState("")
-  const [pending, startTransition] = useTransition()
+export default async function TestFlavorPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
+  const admin = createAdminClient()
 
-  const handleGenerate = () => {
-    if (!imageId.trim()) return
-    setError("")
-    setResult(null)
-    startTransition(async () => {
-      const res = await runChainAction(id, imageId.trim())
-      if (res.error) {
-        setError(res.error)
-      } else if (res.result) {
-        setResult(res.result)
-      }
-    })
+  const [flavorRes, captionsRes, testImagesRes] = await Promise.all([
+    admin.from('humor_flavors').select('id, slug, description').eq('id', Number(id)).single(),
+    admin.from('captions')
+      .select('id, content, created_datetime_utc, images!left(id, url)')
+      .eq('humor_flavor_id', Number(id))
+      .order('created_datetime_utc', { ascending: false })
+      .limit(20),
+    admin.from('images').select('id, url').eq('is_common_use', true).order('id'),
+  ])
+
+  if (flavorRes.error || !flavorRes.data) {
+    notFound()
   }
 
+  const flavor = flavorRes.data
+  const captions = captionsRes.data ?? []
+  const testImages = testImagesRes.data ?? []
+
   return (
-    <div className="space-y-6">
-      <div>
-        <Link
-          href={`/flavors/${id}`}
-          className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
-        >
-          Back to Flavor
+    <div className="max-w-4xl">
+      <div className="mb-8">
+        <Link href={`/flavors/${id}`} className="text-sm text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors">
+          ← Back to flavor
         </Link>
-        <h1 className="text-2xl font-bold mt-1">Test Flavor</h1>
+        <div className="mt-3 flex items-center gap-3">
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Test Flavor</h1>
+          <span className="text-sm font-mono bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300 px-2 py-0.5 rounded">
+            {flavor.slug}
+          </span>
+        </div>
+        {flavor.description && (
+          <p className="text-sm text-slate-600 dark:text-slate-400 mt-2">{flavor.description}</p>
+        )}
       </div>
 
-      <div className="space-y-3">
-        <label className="block text-sm font-medium">Image ID</label>
-        <input
-          type="text"
-          value={imageId}
-          onChange={(e) => setImageId(e.target.value)}
-          placeholder="Enter image ID"
-          className="w-full border border-gray-300 dark:border-gray-700 rounded px-3 py-2 bg-white dark:bg-gray-900 text-sm"
-        />
-        <button
-          onClick={handleGenerate}
-          disabled={pending || !imageId.trim()}
-          className="bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-6 rounded disabled:opacity-50"
-        >
-          {pending ? "Generating..." : "Generate Captions"}
-        </button>
+      <div className="grid gap-6">
+        <TestCaptionGenerator flavorId={flavor.id} flavorSlug={flavor.slug} testImages={testImages} />
+        <FlavorCaptions captions={captions} />
       </div>
-
-      {error && (
-        <div className="p-4 bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded text-red-700 dark:text-red-300 text-sm">
-          {error}
-        </div>
-      )}
-
-      {result && (
-        <div className="space-y-4">
-          <h2 className="text-lg font-semibold">Result</h2>
-          <pre className="border border-gray-200 dark:border-gray-800 rounded p-4 bg-white dark:bg-gray-900 text-sm whitespace-pre-wrap overflow-auto">
-            {JSON.stringify(result, null, 2)}
-          </pre>
-        </div>
-      )}
     </div>
   )
 }
