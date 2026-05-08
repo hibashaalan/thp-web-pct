@@ -1,20 +1,18 @@
-import { createClient } from "@/lib/supabase/server"
+import { createAdminClient } from "@/lib/supabase/admin"
 import { NextResponse } from "next/server"
 
 export async function GET() {
-  const supabase = await createClient()
-  const { data: { session } } = await supabase.auth.getSession()
-  const token = session?.access_token
+  const admin = createAdminClient()
 
-  const res = await fetch("https://api.almostcrackd.ai/pipeline/generate-captions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${token ?? ""}`,
-    },
-    body: JSON.stringify({ imageId: "probe-test", humorFlavorId: "probe-test" }),
+  const [flavors, humorFlavors] = await Promise.all([
+    admin.from("flavors").select("*").limit(3),
+    admin.from("humor_flavors").select("*").limit(3),
+  ])
+
+  return NextResponse.json({
+    flavors: flavors.data,
+    flavorsError: flavors.error?.message,
+    humorFlavors: humorFlavors.data,
+    humorFlavorsError: humorFlavors.error?.message,
   })
-
-  const body = await res.text()
-  return NextResponse.json({ hasSession: !!token, status: res.status, body })
 }
