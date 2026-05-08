@@ -6,7 +6,7 @@ export default async function Home() {
   const profile = await getSession()
   const admin = isAdmin(profile)
 
-  let flavors: { id: string; name: string }[] = []
+  let flavors: { id: number; slug: string; description: string }[] = []
   let fetchError: string | null = null
 
   if (admin) {
