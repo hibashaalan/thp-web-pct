@@ -21,11 +21,11 @@ interface Caption {
 
 export default function TestCaptionGenerator({
   flavorId,
-  flavorSlug,
+  flavorName,
   testImages,
 }: {
-  flavorId: number
-  flavorSlug: string
+  flavorId: string
+  flavorName: string
   testImages: TestImage[]
 }) {
   const supabase = createClient()
@@ -144,7 +144,7 @@ export default function TestCaptionGenerator({
         Generate Test Captions
       </h2>
       <p className="text-sm text-slate-500 dark:text-slate-400 mb-5">
-        Generate captions using the <span className="font-mono text-purple-600 dark:text-purple-400">{flavorSlug}</span> humor flavor
+        Generate captions using the <span className="font-mono text-purple-600 dark:text-purple-400">{flavorName}</span> humor flavor
       </p>
 
       {/* Mode toggle */}

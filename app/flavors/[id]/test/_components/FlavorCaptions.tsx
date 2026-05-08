@@ -1,8 +1,8 @@
 interface Caption {
   id: string
-  content: string
-  created_datetime_utc: string
-  images: { id: string; url: string }[] | null
+  output: string
+  created_at: string
+  image_url: string | null
 }
 
 export default function FlavorCaptions({ captions }: { captions: Caption[] }) {
@@ -30,16 +30,16 @@ export default function FlavorCaptions({ captions }: { captions: Caption[] }) {
             key={caption.id}
             className="bg-slate-50 dark:bg-slate-800 rounded-xl p-4"
           >
-            {caption.images?.[0]?.url && (
+            {caption.image_url && (
               <img
-                src={caption.images[0].url}
+                src={caption.image_url}
                 alt="Caption image"
                 className="w-full max-h-32 object-cover rounded-lg mb-3"
               />
             )}
-            <p className="text-sm text-slate-800 dark:text-slate-200">{caption.content}</p>
+            <p className="text-sm text-slate-800 dark:text-slate-200">{caption.output}</p>
             <p className="text-xs text-slate-400 dark:text-slate-600 mt-2">
-              {new Date(caption.created_datetime_utc).toLocaleString()}
+              {new Date(caption.created_at).toLocaleString()}
             </p>
           </div>
         ))}

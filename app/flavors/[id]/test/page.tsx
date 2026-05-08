@@ -11,11 +11,11 @@ export default async function TestFlavorPage({ params }: { params: Promise<{ id:
   const admin = createAdminClient()
 
   const [flavorRes, captionsRes, testImagesRes] = await Promise.all([
-    admin.from('humor_flavors').select('id, slug, description').eq('id', Number(id)).single(),
+    admin.from('flavors').select('id, name').eq('id', id).single(),
     admin.from('captions')
-      .select('id, content, created_datetime_utc, images!left(id, url)')
-      .eq('humor_flavor_id', Number(id))
-      .order('created_datetime_utc', { ascending: false })
+      .select('id, output, created_at, image_url')
+      .eq('flavor_id', id)
+      .order('created_at', { ascending: false })
       .limit(20),
     admin.from('images').select('id, url').eq('is_common_use', true).order('id'),
   ])
@@ -36,17 +36,14 @@ export default async function TestFlavorPage({ params }: { params: Promise<{ id:
         </Link>
         <div className="mt-3 flex items-center gap-3">
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Test Flavor</h1>
-          <span className="text-sm font-mono bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300 px-2 py-0.5 rounded">
-            {flavor.slug}
+          <span className="text-sm font-semibold bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300 px-2 py-0.5 rounded">
+            {flavor.name}
           </span>
         </div>
-        {flavor.description && (
-          <p className="text-sm text-slate-600 dark:text-slate-400 mt-2">{flavor.description}</p>
-        )}
       </div>
 
       <div className="grid gap-6">
-        <TestCaptionGenerator flavorId={flavor.id} flavorSlug={flavor.slug} testImages={testImages} />
+        <TestCaptionGenerator flavorId={flavor.id} flavorName={flavor.name} testImages={testImages} />
         <FlavorCaptions captions={captions} />
       </div>
     </div>
