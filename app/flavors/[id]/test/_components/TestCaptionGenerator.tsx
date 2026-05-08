@@ -82,7 +82,7 @@ export default function TestCaptionGenerator({
           headers: { ...authHeader, 'Content-Type': 'application/json' },
           body: JSON.stringify({ contentType: file!.type }),
         })
-        if (!presignRes.ok) throw new Error(`Presign failed: ${presignRes.status}`)
+        if (!presignRes.ok) throw new Error(`Presign failed: ${presignRes.status} — ${await presignRes.text()}`)
         const { presignedUrl, cdnUrl } = await presignRes.json()
 
         // Step 2: Upload
@@ -92,7 +92,7 @@ export default function TestCaptionGenerator({
           headers: { 'Content-Type': file!.type },
           body: file,
         })
-        if (!uploadRes.ok) throw new Error(`Upload failed: ${uploadRes.status}`)
+        if (!uploadRes.ok) throw new Error(`Upload failed: ${uploadRes.status} — ${await uploadRes.text()}`)
         setUploadedImageUrl(cdnUrl)
 
         // Step 3: Register
@@ -102,7 +102,7 @@ export default function TestCaptionGenerator({
           headers: { ...authHeader, 'Content-Type': 'application/json' },
           body: JSON.stringify({ imageUrl: cdnUrl, isCommonUse: false }),
         })
-        if (!registerRes.ok) throw new Error(`Register failed: ${registerRes.status}`)
+        if (!registerRes.ok) throw new Error(`Register failed: ${registerRes.status} — ${await registerRes.text()}`)
         const data = await registerRes.json()
         imageId = data.imageId
       }
@@ -114,7 +114,10 @@ export default function TestCaptionGenerator({
         headers: { ...authHeader, 'Content-Type': 'application/json' },
         body: JSON.stringify({ imageId, humorFlavorId: flavorId }),
       })
-      if (!captionsRes.ok) throw new Error(`Caption generation failed: ${captionsRes.status}`)
+      if (!captionsRes.ok) {
+        const errBody = await captionsRes.text()
+        throw new Error(`Caption generation failed: ${captionsRes.status} — ${errBody}`)
+      }
       const captionData = await captionsRes.json()
       setCaptions(Array.isArray(captionData) ? captionData : [])
 
