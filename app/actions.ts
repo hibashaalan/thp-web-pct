@@ -15,7 +15,7 @@ import {
   moveStepDown,
 } from "@/lib/api"
 import { runChain } from "@/lib/chain"
-import type { StepResult } from "@/lib/chain"
+import type { CaptionResult } from "@/lib/chain"
 
 export async function logoutAction(): Promise<void> {
   const supabase = await createClient()
@@ -128,11 +128,11 @@ export async function moveStepDownAction(
 
 export async function runChainAction(
   flavorId: string,
-  imageUrl: string
-): Promise<{ results?: StepResult[]; error?: string }> {
+  imageId: string
+): Promise<{ result?: CaptionResult; error?: string }> {
   try {
-    const results = await runChain(flavorId, imageUrl)
-    return { results }
+    const result = await runChain(flavorId, imageId)
+    return { result }
   } catch (e) {
     return { error: e instanceof Error ? e.message : "Failed to run chain" }
   }
