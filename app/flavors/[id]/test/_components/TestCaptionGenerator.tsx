@@ -21,7 +21,7 @@ interface Caption {
 
 export default function TestCaptionGenerator({
   flavorId,
-  flavorName,
+  flavorSlug,
   testImages,
 }: {
   flavorId: number
