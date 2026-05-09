@@ -24,18 +24,13 @@ export default async function StatsPage() {
   await requireAdmin()
   const admin = createAdminClient()
 
-  const [totalCaptionsRes, totalVotesRes, allVotesRes, topVotesRes] = await Promise.all([
+  const [totalCaptionsRes, totalVotesRes, allVotesRes] = await Promise.all([
     admin.from('captions').select('*', { count: 'exact', head: true }),
     admin.from('caption_votes').select('*', { count: 'exact', head: true }),
     admin
       .from('caption_votes')
-      .select('vote_value, caption_id, captions!inner(id, content, humor_flavor_id, images!left(url), humor_flavors!inner(id, slug))')
+      .select('vote_value, caption_id, captions!inner(id, content, images!left(url), humor_flavors!inner(id, slug))')
       .limit(5000),
-    admin
-      .from('caption_votes')
-      .select('caption_id, vote_value, captions!inner(id, content, humor_flavor_id, images!left(url), humor_flavors!inner(id, slug))')
-      .eq('vote_value', 1)
-      .limit(1000),
   ])
 
   const totalCaptions = totalCaptionsRes.count ?? 0
@@ -84,7 +79,7 @@ export default async function StatsPage() {
         content: caption.content,
         funny: 0,
         meh: 0,
-        image_url: caption.images?.url ?? null,
+        image_url: (caption.images as any)?.[0]?.url ?? caption.images?.url ?? null,
         flavor_slug: caption.humor_flavors?.slug ?? '',
       }
     }
