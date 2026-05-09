@@ -1,0 +1,65 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { requireAdmin } from '@/app/api/auth-check'
+import { createAdminClient } from '@/lib/supabase/admin'
+
+export async function GET(
+  _request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { error: authError } = await requireAdmin()
+  if (authError) return authError
+
+  const { id } = await params
+  const admin = createAdminClient()
+  const { data, error: dbError } = await admin
+    .from('humor_flavor_steps')
+    .select('*')
+    .eq('humor_flavor_id', Number(id))
+    .order('order_by', { ascending: true })
+
+  if (dbError) return NextResponse.json({ error: dbError.message }, { status: 500 })
+  return NextResponse.json(data)
+}
+
+export async function POST(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { error, userId } = await requireAdmin()
+  if (error) return error
+
+  const { id } = await params
+  const body = await request.json()
+  const admin = createAdminClient()
+
+  const { data: existing } = await admin
+    .from('humor_flavor_steps')
+    .select('order_by')
+    .eq('humor_flavor_id', Number(id))
+    .order('order_by', { ascending: false })
+    .limit(1)
+
+  const nextOrder = existing && existing.length > 0 ? existing[0].order_by + 1 : 1
+
+  const { data, error: dbError } = await admin
+    .from('humor_flavor_steps')
+    .insert({
+      humor_flavor_id: Number(id),
+      order_by: nextOrder,
+      humor_flavor_step_type_id: body.humor_flavor_step_type_id ?? null,
+      llm_input_type_id: body.llm_input_type_id ?? null,
+      llm_output_type_id: body.llm_output_type_id ?? null,
+      llm_model_id: body.llm_model_id ?? null,
+      llm_temperature: body.llm_temperature ?? 0.7,
+      description: body.description ?? null,
+      llm_system_prompt: body.llm_system_prompt ?? null,
+      llm_user_prompt: body.llm_user_prompt ?? null,
+      created_by_user_id: userId,
+      modified_by_user_id: userId,
+    })
+    .select()
+    .single()
+
+  if (dbError) return NextResponse.json({ error: dbError.message }, { status: 500 })
+  return NextResponse.json(data, { status: 201 })
+}

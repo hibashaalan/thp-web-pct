@@ -4,16 +4,7 @@ import { revalidatePath } from "next/cache"
 import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
-import {
-  createFlavor,
-  updateFlavor,
-  deleteFlavor,
-  createStep,
-  updateStep,
-  deleteStep,
-  moveStepUp,
-  moveStepDown,
-} from "@/lib/api"
+import { createFlavor, updateFlavor, deleteFlavor } from "@/lib/api"
 
 export async function logoutAction(): Promise<void> {
   const supabase = await createClient()
@@ -62,73 +53,6 @@ export async function deleteFlavorAction(
     return { error: e instanceof Error ? e.message : "Failed to delete flavor" }
   }
 }
-
-export async function createStepAction(
-  flavorId: number,
-  prompt: string
-): Promise<{ error?: string }> {
-  try {
-    await createStep(flavorId, prompt)
-    revalidatePath(`/flavors/${flavorId}`)
-    return {}
-  } catch (e) {
-    return { error: e instanceof Error ? e.message : "Failed to create step" }
-  }
-}
-
-export async function updateStepAction(
-  stepId: string,
-  flavorId: number,
-  prompt: string
-): Promise<{ error?: string }> {
-  try {
-    await updateStep(stepId, prompt)
-    revalidatePath(`/flavors/${flavorId}`)
-    return {}
-  } catch (e) {
-    return { error: e instanceof Error ? e.message : "Failed to update step" }
-  }
-}
-
-export async function deleteStepAction(
-  stepId: string,
-  flavorId: number
-): Promise<{ error?: string }> {
-  try {
-    await deleteStep(stepId)
-    revalidatePath(`/flavors/${flavorId}`)
-    return {}
-  } catch (e) {
-    return { error: e instanceof Error ? e.message : "Failed to delete step" }
-  }
-}
-
-export async function moveStepUpAction(
-  stepId: string,
-  flavorId: number
-): Promise<{ error?: string }> {
-  try {
-    await moveStepUp(stepId)
-    revalidatePath(`/flavors/${flavorId}`)
-    return {}
-  } catch (e) {
-    return { error: e instanceof Error ? e.message : "Failed to reorder" }
-  }
-}
-
-export async function moveStepDownAction(
-  stepId: string,
-  flavorId: number
-): Promise<{ error?: string }> {
-  try {
-    await moveStepDown(stepId)
-    revalidatePath(`/flavors/${flavorId}`)
-    return {}
-  } catch (e) {
-    return { error: e instanceof Error ? e.message : "Failed to reorder" }
-  }
-}
-
 
 export async function setThemeAction(
   theme: "light" | "dark" | "system"

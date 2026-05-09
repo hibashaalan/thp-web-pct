@@ -1,14 +1,32 @@
 export type Flavor = {
   id: number
   slug: string
-  description: string
+  description: string | null
 }
 
 export type Step = {
-  id: string
-  flavor_id: number
-  step_number: number
-  prompt: string
+  id: number
+  humor_flavor_id: number
+  order_by: number
+  humor_flavor_step_type_id: number | null
+  llm_input_type_id: number | null
+  llm_output_type_id: number | null
+  llm_model_id: number | null
+  llm_temperature: number | null
+  description: string | null
+  llm_system_prompt: string | null
+  llm_user_prompt: string | null
+}
+
+export type LookupType = {
+  id: number
+  slug: string
+  description: string | null
+}
+
+export type Model = {
+  id: number
+  name: string
 }
 
 export type User = {

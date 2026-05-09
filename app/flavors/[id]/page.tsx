@@ -1,8 +1,8 @@
 import Link from "next/link"
+import { notFound } from "next/navigation"
 import { requireAdmin } from "@/lib/auth"
-import { getFlavor } from "@/lib/api"
-import StepForm from "@/components/StepForm"
-import StepList from "@/components/StepList"
+import { createAdminClient } from "@/lib/supabase/admin"
+import StepsManager from "@/components/StepsManager"
 
 export default async function FlavorDetail({
   params,
@@ -11,7 +11,25 @@ export default async function FlavorDetail({
 }) {
   await requireAdmin()
   const { id } = await params
-  const flavor = await getFlavor(Number(id)).catch(() => null)
+  const admin = createAdminClient()
+
+  const [flavorRes, stepsRes, modelsRes, stepTypesRes, inputTypesRes, outputTypesRes] = await Promise.all([
+    admin.from("humor_flavors").select("id, slug, description").eq("id", Number(id)).single(),
+    admin.from("humor_flavor_steps").select("*").eq("humor_flavor_id", Number(id)).order("order_by", { ascending: true }),
+    admin.from("llm_models").select("id, name").order("name"),
+    admin.from("humor_flavor_step_types").select("id, slug, description").order("slug"),
+    admin.from("llm_input_types").select("id, slug, description").order("slug"),
+    admin.from("llm_output_types").select("id, slug, description").order("slug"),
+  ])
+
+  if (flavorRes.error || !flavorRes.data) notFound()
+
+  const flavor = flavorRes.data
+  const steps = stepsRes.data ?? []
+  const models = modelsRes.data ?? []
+  const stepTypes = stepTypesRes.data ?? []
+  const inputTypes = inputTypesRes.data ?? []
+  const outputTypes = outputTypesRes.data ?? []
 
   return (
     <div className="space-y-6">
@@ -23,8 +41,11 @@ export default async function FlavorDetail({
           >
             Back to Flavors
           </Link>
-          <h1 className="text-2xl font-bold mt-1 font-mono">{flavor?.slug ?? "Flavor"}</h1>
-          {flavor?.description && (
+          <div className="flex items-center gap-3 mt-1">
+            <h1 className="text-2xl font-bold font-mono">{flavor.slug}</h1>
+            <span className="text-xs text-gray-400 font-mono">#{flavor.id}</span>
+          </div>
+          {flavor.description && (
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{flavor.description}</p>
           )}
         </div>
@@ -36,14 +57,14 @@ export default async function FlavorDetail({
         </Link>
       </div>
 
-      <div className="space-y-4">
-        <h2 className="text-lg font-semibold">Steps</h2>
-        <StepList flavorId={Number(id)} />
-        <div className="border-t border-gray-200 dark:border-gray-800 pt-4">
-          <h3 className="text-sm font-medium mb-2">Add Step</h3>
-          <StepForm flavorId={Number(id)} />
-        </div>
-      </div>
+      <StepsManager
+        flavorId={Number(id)}
+        steps={steps}
+        models={models}
+        stepTypes={stepTypes}
+        inputTypes={inputTypes}
+        outputTypes={outputTypes}
+      />
     </div>
   )
 }
