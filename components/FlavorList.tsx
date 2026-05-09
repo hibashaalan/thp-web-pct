@@ -1,5 +1,5 @@
 import { getFlavors } from "@/lib/api"
-import FlavorItem from "./FlavorItem"
+import FlavorListClient from "./FlavorListClient"
 
 export default async function FlavorList() {
   let flavors
@@ -16,19 +16,5 @@ export default async function FlavorList() {
     )
   }
 
-  if (flavors.length === 0) {
-    return (
-      <p className="text-gray-500 dark:text-gray-400 text-sm">
-        No flavors yet. Create one above.
-      </p>
-    )
-  }
-
-  return (
-    <ul className="space-y-2">
-      {flavors.map((f) => (
-        <FlavorItem key={f.id} flavor={f} />
-      ))}
-    </ul>
-  )
+  return <FlavorListClient flavors={flavors} />
 }

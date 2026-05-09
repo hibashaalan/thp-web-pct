@@ -19,6 +19,30 @@ interface Caption {
   [key: string]: unknown
 }
 
+function CaptionRow({ idx, content }: { idx: number; content: string }) {
+  const [copied, setCopied] = useState(false)
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(content).then(() => {
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    })
+  }
+
+  return (
+    <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-3 text-sm text-slate-800 dark:text-slate-200 flex items-start gap-2">
+      <span className="text-xs text-slate-400 dark:text-slate-600 font-mono shrink-0 mt-0.5">{idx + 1}.</span>
+      <span className="flex-1">{content}</span>
+      <button
+        onClick={handleCopy}
+        className="shrink-0 text-xs text-purple-600 dark:text-purple-400 hover:underline"
+      >
+        {copied ? 'Copied!' : 'Copy'}
+      </button>
+    </div>
+  )
+}
+
 export default function TestCaptionGenerator({
   flavorId,
   flavorSlug,
@@ -75,7 +99,6 @@ export default function TestCaptionGenerator({
         imageId = selectedTestImage.id
         setUploadedImageUrl(selectedTestImage.url)
       } else {
-        // Step 1: Presign
         setStep('presign')
         const presignRes = await fetch(`${API_BASE}/pipeline/generate-presigned-url`, {
           method: 'POST',
@@ -85,7 +108,6 @@ export default function TestCaptionGenerator({
         if (!presignRes.ok) throw new Error(`Presign failed: ${presignRes.status} — ${await presignRes.text()}`)
         const { presignedUrl, cdnUrl } = await presignRes.json()
 
-        // Step 2: Upload
         setStep('upload')
         const uploadRes = await fetch(presignedUrl, {
           method: 'PUT',
@@ -95,7 +117,6 @@ export default function TestCaptionGenerator({
         if (!uploadRes.ok) throw new Error(`Upload failed: ${uploadRes.status} — ${await uploadRes.text()}`)
         setUploadedImageUrl(cdnUrl)
 
-        // Step 3: Register
         setStep('register')
         const registerRes = await fetch(`${API_BASE}/pipeline/upload-image-from-url`, {
           method: 'POST',
@@ -107,7 +128,6 @@ export default function TestCaptionGenerator({
         imageId = data.imageId
       }
 
-      // Generate captions
       setStep('captions')
       const captionsRes = await fetch(`${API_BASE}/pipeline/generate-captions`, {
         method: 'POST',
@@ -120,7 +140,6 @@ export default function TestCaptionGenerator({
       }
       const captionData = await captionsRes.json()
       setCaptions(Array.isArray(captionData) ? captionData : [])
-
       setStep('done')
     } catch (err: unknown) {
       setErrorMsg(err instanceof Error ? err.message : 'Unknown error')
@@ -143,28 +162,34 @@ export default function TestCaptionGenerator({
 
   return (
     <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6">
-      <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
-        Generate Test Captions
+      <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-1">
+        Generate Captions
       </h2>
       <p className="text-sm text-slate-500 dark:text-slate-400 mb-5">
-        Generate captions using the <span className="font-mono text-purple-600 dark:text-purple-400">{flavorSlug}</span> humor flavor
+        Pick an image below, then click <strong>Generate Captions</strong> to run the{' '}
+        <span className="font-mono text-purple-600 dark:text-purple-400">{flavorSlug}</span> humor flavor on it.
       </p>
 
       {/* Mode toggle */}
-      <div className="flex gap-1 mb-5 bg-slate-100 dark:bg-slate-800 rounded-lg p-1">
+      <div className="flex gap-1 mb-2 bg-slate-100 dark:bg-slate-800 rounded-lg p-1">
         <button
           onClick={() => { setMode('test'); setStep('idle'); setErrorMsg(''); setCaptions([]); setUploadedImageUrl(null) }}
           className={`flex-1 py-1.5 rounded-md text-sm font-medium transition-colors ${mode === 'test' ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'}`}
         >
-          Test Images
+          Use a Test Image
         </button>
         <button
           onClick={() => { setMode('upload'); setStep('idle'); setErrorMsg(''); setCaptions([]); setUploadedImageUrl(null) }}
           className={`flex-1 py-1.5 rounded-md text-sm font-medium transition-colors ${mode === 'upload' ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'}`}
         >
-          Custom Upload
+          Upload Your Own Image
         </button>
       </div>
+      <p className="text-xs text-slate-400 dark:text-slate-500 mb-4">
+        {mode === 'test'
+          ? 'Select from pre-loaded test images below.'
+          : 'Upload any image from your device (JPEG, PNG, WebP, GIF, HEIC).'}
+      </p>
 
       {/* Test images grid */}
       {mode === 'test' && (
@@ -220,12 +245,11 @@ export default function TestCaptionGenerator({
             ) : (
               <div className="text-center">
                 <p className="text-3xl mb-2">📷</p>
-                <p className="text-slate-600 dark:text-slate-400 font-medium">Click to select an image</p>
-                <p className="text-slate-400 dark:text-slate-600 text-sm mt-1">JPEG, PNG, WebP, GIF, HEIC</p>
+                <p className="text-slate-600 dark:text-slate-400 font-medium">Click here to select an image</p>
+                <p className="text-slate-400 dark:text-slate-600 text-sm mt-1">JPEG, PNG, WebP, GIF, HEIC supported</p>
               </div>
             )}
           </div>
-
           {file && (
             <p className="text-sm text-slate-500 dark:text-slate-400 text-center mb-4">
               {file.name} ({(file.size / 1024).toFixed(1)} KB)
@@ -253,6 +277,11 @@ export default function TestCaptionGenerator({
       >
         {isLoading ? 'Generating...' : 'Generate Captions'}
       </button>
+      {!canGenerate && !isLoading && (
+        <p className="text-xs text-slate-400 text-center mt-2">
+          {mode === 'test' ? 'Select an image above to continue.' : 'Upload an image above to continue.'}
+        </p>
+      )}
 
       {/* Error */}
       {step === 'error' && (
@@ -264,8 +293,19 @@ export default function TestCaptionGenerator({
       {/* Results */}
       {step === 'done' && (
         <div className="mt-6">
-          {uploadedImageUrl && mode === 'upload' && (
-            <img src={uploadedImageUrl} alt="Uploaded" className="w-full max-h-40 object-cover rounded-xl mb-4" />
+          {uploadedImageUrl && (
+            <div className="mb-4">
+              <img src={uploadedImageUrl} alt="Image" className="w-full max-h-48 object-cover rounded-xl" />
+              <a
+                href={uploadedImageUrl}
+                download
+                target="_blank"
+                rel="noreferrer"
+                className="mt-1 inline-block text-xs text-purple-600 dark:text-purple-400 hover:underline"
+              >
+                Download image ↓
+              </a>
+            </div>
           )}
           <h3 className="text-base font-semibold text-slate-900 dark:text-white mb-3">
             Generated Captions ({captions.length})
@@ -273,13 +313,7 @@ export default function TestCaptionGenerator({
           {captions.length > 0 ? (
             <div className="flex flex-col gap-2">
               {captions.map((caption, idx) => (
-                <div
-                  key={caption.id ?? idx}
-                  className="bg-slate-50 dark:bg-slate-800 rounded-lg p-3 text-sm text-slate-800 dark:text-slate-200"
-                >
-                  <span className="text-xs text-slate-400 dark:text-slate-600 font-mono mr-2">{idx + 1}.</span>
-                  {caption.content}
-                </div>
+                <CaptionRow key={caption.id ?? idx} idx={idx} content={caption.content} />
               ))}
             </div>
           ) : (
