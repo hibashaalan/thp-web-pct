@@ -8,7 +8,7 @@ import { updateFlavorAction, deleteFlavorAction } from "@/app/actions"
 export default function FlavorItem({ flavor }: { flavor: Flavor }) {
   const [editing, setEditing] = useState(false)
   const [slug, setSlug] = useState(flavor.slug)
-  const [description, setDescription] = useState(flavor.description)
+  const [description, setDescription] = useState(flavor.description ?? "")
   const [error, setError] = useState("")
   const [pending, startTransition] = useTransition()
 
@@ -16,7 +16,7 @@ export default function FlavorItem({ flavor }: { flavor: Flavor }) {
     if (!slug.trim()) return
     setError("")
     startTransition(async () => {
-      const result = await updateFlavorAction(flavor.id, slug.trim(), description.trim())
+      const result = await updateFlavorAction(flavor.id, slug.trim(), description?.trim() ?? "")
       if (result.error) {
         setError(result.error)
       } else {
@@ -58,7 +58,7 @@ export default function FlavorItem({ flavor }: { flavor: Flavor }) {
             Save
           </button>
           <button
-            onClick={() => { setEditing(false); setSlug(flavor.slug); setDescription(flavor.description) }}
+            onClick={() => { setEditing(false); setSlug(flavor.slug); setDescription(flavor.description ?? "") }}
             className="text-sm text-gray-500 hover:underline"
           >
             Cancel
