@@ -1,7 +1,7 @@
 import { getSteps } from "@/lib/api"
 import StepItem from "./StepItem"
 
-export default async function StepList({ flavorId }: { flavorId: string }) {
+export default async function StepList({ flavorId }: { flavorId: number }) {
   let steps
   try {
     steps = await getSteps(flavorId)

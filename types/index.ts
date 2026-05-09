@@ -6,7 +6,7 @@ export type Flavor = {
 
 export type Step = {
   id: string
-  flavor_id: string
+  flavor_id: number
   step_number: number
   prompt: string
 }

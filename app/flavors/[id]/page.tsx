@@ -38,10 +38,10 @@ export default async function FlavorDetail({
 
       <div className="space-y-4">
         <h2 className="text-lg font-semibold">Steps</h2>
-        <StepList flavorId={id} />
+        <StepList flavorId={Number(id)} />
         <div className="border-t border-gray-200 dark:border-gray-800 pt-4">
           <h3 className="text-sm font-medium mb-2">Add Step</h3>
-          <StepForm flavorId={id} />
+          <StepForm flavorId={Number(id)} />
         </div>
       </div>
     </div>

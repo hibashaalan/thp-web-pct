@@ -24,11 +24,11 @@ export async function getFlavor(id: number): Promise<Flavor> {
   return data
 }
 
-export async function createFlavor(slug: string, description: string): Promise<Flavor> {
+export async function createFlavor(slug: string, description: string, userId: string): Promise<Flavor> {
   const supabase = createAdminClient()
   const { data, error } = await supabase
     .from("humor_flavors")
-    .insert({ slug, description })
+    .insert({ slug, description, created_by_user_id: userId })
     .select("id, slug, description")
     .single()
   if (error) throw new Error(error.message)
@@ -55,7 +55,7 @@ export async function deleteFlavor(id: number): Promise<void> {
 
 // Steps
 
-export async function getSteps(flavorId: string): Promise<Step[]> {
+export async function getSteps(flavorId: number): Promise<Step[]> {
   const supabase = createAdminClient()
   const { data, error } = await supabase
     .from("steps")
@@ -66,7 +66,7 @@ export async function getSteps(flavorId: string): Promise<Step[]> {
   return data
 }
 
-export async function createStep(flavorId: string, prompt: string): Promise<Step> {
+export async function createStep(flavorId: number, prompt: string): Promise<Step> {
   const supabase = createAdminClient()
   const { data: existing } = await supabase
     .from("steps")

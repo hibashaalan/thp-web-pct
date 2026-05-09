@@ -16,7 +16,7 @@ export default function StepItem({
   isLast,
 }: {
   step: Step
-  flavorId: string
+  flavorId: number
   isFirst: boolean
   isLast: boolean
 }) {

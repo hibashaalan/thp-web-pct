@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react"
 import { createStepAction } from "@/app/actions"
 
-export default function StepForm({ flavorId }: { flavorId: string }) {
+export default function StepForm({ flavorId }: { flavorId: number }) {
   const [prompt, setPrompt] = useState("")
   const [error, setError] = useState("")
   const [pending, startTransition] = useTransition()

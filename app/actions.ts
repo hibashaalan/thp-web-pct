@@ -26,7 +26,10 @@ export async function createFlavorAction(
   description: string
 ): Promise<{ error?: string }> {
   try {
-    await createFlavor(slug, description)
+    const supabase = await createClient()
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    if (authError || !user?.id) return { error: "Not authenticated" }
+    await createFlavor(slug, description, user.id)
     revalidatePath("/flavors")
     return {}
   } catch (e) {
@@ -61,7 +64,7 @@ export async function deleteFlavorAction(
 }
 
 export async function createStepAction(
-  flavorId: string,
+  flavorId: number,
   prompt: string
 ): Promise<{ error?: string }> {
   try {
@@ -75,7 +78,7 @@ export async function createStepAction(
 
 export async function updateStepAction(
   stepId: string,
-  flavorId: string,
+  flavorId: number,
   prompt: string
 ): Promise<{ error?: string }> {
   try {
@@ -89,7 +92,7 @@ export async function updateStepAction(
 
 export async function deleteStepAction(
   stepId: string,
-  flavorId: string
+  flavorId: number
 ): Promise<{ error?: string }> {
   try {
     await deleteStep(stepId)
@@ -102,7 +105,7 @@ export async function deleteStepAction(
 
 export async function moveStepUpAction(
   stepId: string,
-  flavorId: string
+  flavorId: number
 ): Promise<{ error?: string }> {
   try {
     await moveStepUp(stepId)
@@ -115,7 +118,7 @@ export async function moveStepUpAction(
 
 export async function moveStepDownAction(
   stepId: string,
-  flavorId: string
+  flavorId: number
 ): Promise<{ error?: string }> {
   try {
     await moveStepDown(stepId)
