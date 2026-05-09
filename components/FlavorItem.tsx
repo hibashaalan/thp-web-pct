@@ -1,16 +1,19 @@
 "use client"
 
 import { useState, useTransition } from "react"
+import { useRouter } from "next/navigation"
 import Link from "next/link"
 import type { Flavor } from "@/types"
 import { updateFlavorAction, deleteFlavorAction } from "@/app/actions"
 
 export default function FlavorItem({ flavor }: { flavor: Flavor }) {
+  const router = useRouter()
   const [editing, setEditing] = useState(false)
   const [slug, setSlug] = useState(flavor.slug)
   const [description, setDescription] = useState(flavor.description ?? "")
   const [error, setError] = useState("")
   const [pending, startTransition] = useTransition()
+  const [duplicating, setDuplicating] = useState(false)
 
   const handleSave = () => {
     if (!slug.trim()) return
@@ -31,6 +34,24 @@ export default function FlavorItem({ flavor }: { flavor: Flavor }) {
       const result = await deleteFlavorAction(flavor.id)
       if (result.error) setError(result.error)
     })
+  }
+
+  const handleDuplicate = async () => {
+    setDuplicating(true)
+    setError("")
+    try {
+      const res = await fetch(`/api/flavors/${flavor.id}/duplicate`, { method: 'POST' })
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}))
+        setError(body.error ?? `Duplicate failed: ${res.status}`)
+      } else {
+        router.refresh()
+      }
+    } catch {
+      setError("Duplicate failed")
+    } finally {
+      setDuplicating(false)
+    }
   }
 
   return (
@@ -83,6 +104,13 @@ export default function FlavorItem({ flavor }: { flavor: Flavor }) {
           >
             Test
           </Link>
+          <button
+            onClick={handleDuplicate}
+            disabled={duplicating || pending}
+            className="text-xs text-purple-600 dark:text-purple-400 hover:underline disabled:opacity-50 px-1"
+          >
+            {duplicating ? 'Copying...' : 'Duplicate'}
+          </button>
           <button
             onClick={() => setEditing(true)}
             className="text-xs text-blue-600 dark:text-blue-400 hover:underline px-1"

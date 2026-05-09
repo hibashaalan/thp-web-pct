@@ -19,12 +19,20 @@ export default async function Navbar() {
             Flavor Tool
           </Link>
           {loggedIn && (
-            <Link
-              href="/flavors"
-              className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
-            >
-              Flavors
-            </Link>
+            <>
+              <Link
+                href="/flavors"
+                className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
+              >
+                Flavors
+              </Link>
+              <Link
+                href="/stats"
+                className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
+              >
+                Stats
+              </Link>
+            </>
           )}
         </div>
         <div className="flex items-center gap-3">
